@@ -1,11 +1,12 @@
 import React from "react";
 import Papa from "papaparse";
-import { Users, Share2 } from "lucide-react";
+import { Users, Copy, Check } from "lucide-react";
 import * as _ from "lodash";
 
 const TennisGroupGenerator = () => {
   const [groups, setGroups] = React.useState([]);
   const [error, setError] = React.useState("");
+  const [copiedGroup, setCopiedGroup] = React.useState(null);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -27,11 +28,12 @@ const TennisGroupGenerator = () => {
     }
   };
 
-  const createWhatsAppLink = (players, groupNumber) => {
-    const groupName = `Grupo Tenis ${groupNumber}`;
-    return `https://wa.me/send?text=Hola! Los invito al grupo de tenis "${groupName}". Por favor, únanse usando este enlace.%0A%0AParticipantes:%0A${players
-      .map((p) => `- ${p.nombre}: ${p.telefono}`)
-      .join("%0A")}`;
+  const copyNumbers = (players, groupNumber) => {
+    // Copiar solo los números al portapapeles
+    const numbers = players.map((p) => p.telefono).join(", ");
+    navigator.clipboard.writeText(numbers);
+    setCopiedGroup(groupNumber);
+    setTimeout(() => setCopiedGroup(null), 2000);
   };
 
   return (
@@ -79,8 +81,8 @@ const TennisGroupGenerator = () => {
               límite de participantes.
             </li>
             <li>
-              Al subir el archivo, se generarán automáticamente los enlaces para
-              crear los grupos de WhatsApp.
+              Al subir el archivo, se mostrarán los grupos y podrá copiar los
+              números fácilmente para crear los grupos en WhatsApp.
             </li>
           </ol>
         </div>
@@ -88,7 +90,8 @@ const TennisGroupGenerator = () => {
         {/* Selector de archivo */}
         <div className="space-y-2">
           <label className="block text-sm font-medium">
-            Subir archivo CSV (con columnas &apos;nombre&apos;, &apos;telefono&apos; y &apos;grupo&apos;)
+            Subir archivo CSV (con columnas &apos;nombre&apos;,
+            &apos;telefono&apos; y &apos;grupo&apos;)
           </label>
           <input
             type="file"
@@ -105,7 +108,22 @@ const TennisGroupGenerator = () => {
       {/* Lista de grupos */}
       {groups.length > 0 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Grupos Existentes</h2>
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <h3 className="font-medium text-blue-800 mb-2">
+              Instrucciones para crear grupos:
+            </h3>
+            <ol className="list-decimal pl-4 text-blue-700 space-y-1">
+              <li>
+                Haz clic en &quot;Copiar Números&quot; para el grupo que desees crear
+              </li>
+              <li>Abre WhatsApp en tu teléfono</li>
+              <li>Pulsa en los tres puntos → Nuevo grupo</li>
+              <li>Pega los números copiados en el campo de búsqueda</li>
+              <li>Selecciona los participantes y crea el grupo</li>
+            </ol>
+          </div>
+
+          <h2 className="text-xl font-semibold">Grupos para Crear</h2>
           <div className="space-y-4">
             {groups.map((group, index) => (
               <div key={index} className="border rounded-lg p-4">
@@ -120,15 +138,22 @@ const TennisGroupGenerator = () => {
                       ))}
                     </ul>
                   </div>
-                  <a
-                    href={createWhatsAppLink(group, group[0].grupo)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => copyNumbers(group, group[0].grupo)}
                     className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
                   >
-                    <Share2 className="h-4 w-4" />
-                    <span>Crear Grupo</span>
-                  </a>
+                    {copiedGroup === group[0].grupo ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        <span>¡Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        <span>Copiar Números</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             ))}
